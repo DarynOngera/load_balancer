@@ -28,16 +28,9 @@ This project is an implementation of a customizable, fault-tolerant load balance
 -   **Consistent Hashing**: Utilizes a custom-built consistent hash map with virtual servers to ensure even load distribution and minimal disruption when servers are added or removed.
 -   **Dockerized Environment**: The entire system (load balancer and servers) is containerized and runs within an isolated Docker network (`net1`).
 
-## System Diagram
-
-<p align="center">
-  <img src="https://i.imgur.com/8QZ70g1.png" alt="System Diagram" width="600">
-</p>
-*(As shown in Fig. 1 of the assignment specification)*
-
 ## Prerequisites
 
--   **OS**: Ubuntu 20.04 LTS or above
+-   **OS**: Parrot OS{any os of your choosing }
 -   **Docker**: Version 20.10.23 or above
 -   **Docker Compose**: Standalone version v2.15.1 or above
 
