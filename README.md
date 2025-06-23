@@ -40,8 +40,8 @@ This project is an implementation of a customizable, fault-tolerant load balance
 
 1.  Clone the repository to your local machine:
     ```bash
-    git clone <your-repo-link>
-    cd <repo-name>
+    git clone https://github.com/DarynOngera/load_balancer
+    cd ./load_balancer
     ```
 
 ### Running the System
