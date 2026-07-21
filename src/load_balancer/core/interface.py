@@ -1,13 +1,16 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 
 class LoadBalancingStrategy(ABC):
     @abstractmethod
     def select_server(
-        self, servers: list[str], context: Optional[Dict[str, Any]] = None
+        self,
+        servers: list[str],
+        context: Optional[Dict[str, Any]] = None,
+        exclude: Optional[list[str]] = None,
     ) -> Optional[str]:
         ...
 

@@ -122,6 +122,31 @@ def test_sticky_fallback_to_req_id() -> None:
     assert result == "server0"
 
 
+def test_exclude_skips_excluded_server() -> None:
+    strategy = ConsistentHashStrategy(total_slots=512, num_virtual_servers=9, hashing_mode="random")
+    for s in ["server0", "server1"]:
+        strategy.add_server(s)
+
+    servers = list(strategy.servers.keys())
+    for req_id in range(100):
+        server = strategy.select_server(servers, context={"req_id": req_id}, exclude=["server0"])
+        assert server == "server1"
+
+
+def test_exclude_all_returns_none() -> None:
+    strategy = ConsistentHashStrategy(total_slots=512, num_virtual_servers=9, hashing_mode="random")
+    strategy.add_server("server0")
+    result = strategy.select_server(["server0"], context={"req_id": 42}, exclude=["server0"])
+    assert result is None
+
+
+def test_exclude_nonexistent_ignored() -> None:
+    strategy = ConsistentHashStrategy(total_slots=512, num_virtual_servers=9, hashing_mode="random")
+    strategy.add_server("server0")
+    result = strategy.select_server(["server0"], context={"req_id": 42}, exclude=["ghost"])
+    assert result == "server0"
+
+
 def test_random_mode_uses_req_id() -> None:
     strategy = ConsistentHashStrategy(total_slots=512, num_virtual_servers=9, hashing_mode="random")
     for s in ["server0", "server1", "server2"]:

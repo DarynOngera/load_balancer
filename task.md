@@ -60,9 +60,13 @@ Builds on: https://github.com/DarynOngera/load_balancer
 - [x] Preserve real responses (not forced JSON) (proxy returns raw: body, status, headers)
 
 ### Phase 3 — Failure Handling
-- [ ] Retry on different backend
-- [ ] Exponential backoff
-- [ ] Automatic recovery (re-add healthy servers)
+- [x] Retry on different backend (`exclude` param through strategy→state→proxy chain)
+- [x] Exponential backoff (`_backoff_delay` with `base * 2^attempt`, capped at `retry_max_delay`)
+- [x] Automatic recovery (health checker already marks healthy; added exponential backoff per server)
+  - [x] `exclude` param on `select_server()` and `get_server()` — strategies skip excluded servers
+  - [x] Proxy retry loop: on transport error → mark unhealthy, exclude, backoff, retry (up to `max_retries`)
+  - [x] Health checker: track consecutive failures per server, backoff before rechecking unhealthy servers
+  - [x] 15 new tests (exclude, backoff, retry loop, exhausted retries, no servers)
 
 ### Phase 4 — Concurrency
 - [ ] Thread safety (locking) — asyncio handles this, review read/write patterns

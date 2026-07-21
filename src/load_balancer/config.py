@@ -17,6 +17,9 @@ class Settings(BaseSettings):
     lb_port: int = 5000
     backend_port: int = 5000
     hashing_mode: str = "sticky"
+    max_retries: int = 2
+    retry_base_delay: float = 0.1
+    retry_max_delay: float = 2.0
 
 
 settings = Settings()

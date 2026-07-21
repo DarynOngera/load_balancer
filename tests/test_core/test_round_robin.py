@@ -32,6 +32,21 @@ def test_empty_returns_none() -> None:
     assert strategy.select_server([]) is None
 
 
+def test_exclude_skips_excluded_server() -> None:
+    strategy = RoundRobinStrategy()
+    for s in ["a", "b", "c"]:
+        strategy.add_server(s)
+    result = strategy.select_server(["a", "b", "c"], exclude=["a", "c"])
+    assert result == "b"
+
+
+def test_exclude_all_returns_none() -> None:
+    strategy = RoundRobinStrategy()
+    strategy.add_server("a")
+    result = strategy.select_server(["a"], exclude=["a"])
+    assert result is None
+
+
 def test_filters_dead_servers() -> None:
     strategy = RoundRobinStrategy()
     strategy.add_server("a")

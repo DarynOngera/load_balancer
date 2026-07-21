@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from load_balancer.core.interface import LoadBalancingStrategy
 
@@ -11,13 +11,18 @@ class RoundRobinStrategy(LoadBalancingStrategy):
         self._index: int = 0
 
     def select_server(
-        self, servers: list[str], context: Optional[Dict[str, Any]] = None
+        self,
+        servers: list[str],
+        context: Optional[Dict[str, Any]] = None,
+        exclude: Optional[list[str]] = None,
     ) -> Optional[str]:
-        if not servers:
+        excluded = set(exclude or [])
+        available = [s for s in servers if s not in excluded]
+        if not available:
             return None
-        self._index = self._index % len(servers)
-        server = servers[self._index]
-        self._index = (self._index + 1) % len(servers)
+        self._index = self._index % len(available)
+        server = available[self._index]
+        self._index = (self._index + 1) % len(available)
         return server
 
     def add_server(self, server: str) -> None:

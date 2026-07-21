@@ -29,12 +29,14 @@ class ServerPool:
     def healthy_servers(self) -> list[str]:
         return [s for s, st in self._status.items() if st == ServerStatus.HEALTHY]
 
-    def get_server(self, req_id: int = 0, client_ip: str = "") -> Optional[str]:
+    def get_server(
+        self, req_id: int = 0, client_ip: str = "", exclude: Optional[list[str]] = None
+    ) -> Optional[str]:
         context: dict[str, object] = {"req_id": req_id}
         if client_ip:
             context["client_ip"] = client_ip
         return self._strategy.select_server(
-            self.healthy_servers(), context=context
+            self.healthy_servers(), context=context, exclude=exclude
         )
 
     def add_server(self, server: str) -> None:
@@ -52,6 +54,9 @@ class ServerPool:
     def mark_healthy(self, server: str) -> None:
         if server in self._status:
             self._status[server] = ServerStatus.HEALTHY
+
+    def get_status(self, server: str) -> Optional[ServerStatus]:
+        return self._status.get(server)
 
     @property
     def all_servers(self) -> List[str]:

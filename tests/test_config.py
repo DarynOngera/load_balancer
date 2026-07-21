@@ -16,3 +16,6 @@ def test_defaults() -> None:
     assert settings.lb_host == "0.0.0.0"
     assert settings.lb_port == 5000
     assert settings.backend_port == 5000
+    assert settings.max_retries == 2
+    assert settings.retry_base_delay == 0.1
+    assert settings.retry_max_delay == 2.0
