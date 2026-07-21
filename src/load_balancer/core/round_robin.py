@@ -13,10 +13,11 @@ class RoundRobinStrategy(LoadBalancingStrategy):
     def select_server(
         self, servers: list[str], context: Optional[Dict[str, Any]] = None
     ) -> Optional[str]:
-        if not self._servers:
+        if not servers:
             return None
-        server = self._servers[self._index]
-        self._index = (self._index + 1) % len(self._servers)
+        self._index = self._index % len(servers)
+        server = servers[self._index]
+        self._index = (self._index + 1) % len(servers)
         return server
 
     def add_server(self, server: str) -> None:

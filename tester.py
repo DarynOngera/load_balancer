@@ -86,7 +86,7 @@ async def run_test(url, num_requests):
 
 if __name__ == '__main__':
     LOAD_BALANCER_URL = "http://localhost:5000/home"
-    NUM_REQUESTS = 1000000
+    NUM_REQUESTS = 10000
     
     # Make sure you have matplotlib installed: pip install matplotlib
     print(f"Starting test with {NUM_REQUESTS} async requests to {LOAD_BALANCER_URL}...")

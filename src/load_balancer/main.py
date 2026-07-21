@@ -21,7 +21,7 @@ async def _async_main() -> None:
     proxy = ProxyClient(pool=pool)
     health = HealthChecker(pool=pool)
 
-    docker_mgr.initialize()
+    await asyncio.to_thread(docker_mgr.initialize)
 
     await proxy.start()
     await health.start()

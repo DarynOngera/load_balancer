@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import random
 
@@ -33,6 +34,15 @@ def create_app(
         n = payload.get("n", 0)
         hostnames = payload.get("hostnames", [])
 
+        if not isinstance(n, int):
+            return web.json_response(
+                {"message": "'n' must be an integer", "status": "failure"}, status=400
+            )
+        if not isinstance(hostnames, list):
+            return web.json_response(
+                {"message": "'hostnames' must be a list", "status": "failure"}, status=400
+            )
+
         if len(hostnames) > n:
             return web.json_response(
                 {
@@ -43,10 +53,15 @@ def create_app(
             )
 
         for hostname in hostnames:
-            docker_mgr.spawn(hostname)
+            if not isinstance(hostname, str) or not hostname:
+                return web.json_response(
+                    {"message": f"Invalid hostname: {hostname}", "status": "failure"},
+                    status=400,
+                )
+            await asyncio.to_thread(docker_mgr.spawn, hostname)
 
         for _ in range(n - len(hostnames)):
-            docker_mgr.spawn(random_hostname())
+            await asyncio.to_thread(docker_mgr.spawn, random_hostname())
 
         servers = pool.active_servers()
         return web.json_response(
@@ -62,6 +77,16 @@ def create_app(
             )
         n = payload.get("n", 0)
         hostnames = payload.get("hostnames", [])
+
+        if not isinstance(n, int):
+            return web.json_response(
+                {"message": "'n' must be an integer", "status": "failure"}, status=400
+            )
+        if not isinstance(hostnames, list):
+            return web.json_response(
+                {"message": "'hostnames' must be a list", "status": "failure"}, status=400
+            )
+
         current = pool.active_servers()
 
         if len(hostnames) > n:
@@ -75,14 +100,14 @@ def create_app(
 
         for hostname in hostnames:
             if hostname in current:
-                docker_mgr.remove(hostname)
+                await asyncio.to_thread(docker_mgr.remove, hostname)
                 current.remove(hostname)
 
         remaining = n - len(hostnames)
         if remaining > 0 and current:
             selected = random.sample(current, min(remaining, len(current)))
             for hostname in selected:
-                docker_mgr.remove(hostname)
+                await asyncio.to_thread(docker_mgr.remove, hostname)
 
         servers = pool.active_servers()
         return web.json_response(

@@ -30,13 +30,17 @@ class ConsistentHashStrategy(LoadBalancingStrategy):
     def select_server(
         self, servers: list[str], context: Optional[Dict[str, Any]] = None
     ) -> Optional[str]:
-        if not self._servers:
+        if not servers or not self._servers:
             return None
         req_id = (context or {}).get("req_id", 0)
         slot = self._request_hash(req_id)
-        while self._hash_map[slot] is None:
+        healthy = set(servers)
+        for _ in range(self.total_slots):
+            candidate = self._hash_map[slot]
+            if candidate is not None and candidate in healthy:
+                return candidate
             slot = (slot + 1) % self.total_slots
-        return self._hash_map[slot]
+        return None
 
     def add_server(self, server: str) -> None:
         if server in self._servers:

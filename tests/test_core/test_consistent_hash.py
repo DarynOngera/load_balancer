@@ -44,3 +44,27 @@ def test_server_occupied_slots(consistent_hash: ConsistentHashStrategy) -> None:
     slots = consistent_hash.servers["serverA"]
     assert len(slots) == 9
     assert all(0 <= s < 512 for s in slots)
+
+
+def test_select_respects_healthy_filter(consistent_hash: ConsistentHashStrategy) -> None:
+    consistent_hash.add_server("server0")
+    consistent_hash.add_server("server1")
+    consistent_hash.add_server("server2")
+
+    healthy = ["server0", "server2"]
+    seen: set[str] = set()
+    for req_id in range(100):
+        server = consistent_hash.select_server(healthy, context={"req_id": req_id})
+        assert server is not None
+        assert server in healthy
+        seen.add(server)
+
+    assert "server1" not in seen
+
+
+def test_select_returns_none_when_no_healthy(consistent_hash: ConsistentHashStrategy) -> None:
+    consistent_hash.add_server("server0")
+    consistent_hash.add_server("server1")
+
+    result = consistent_hash.select_server([], context={"req_id": 42})
+    assert result is None
