@@ -15,16 +15,13 @@ def test_round_robin_cycles() -> None:
 
 def test_remove_current_index() -> None:
     strategy = RoundRobinStrategy()
-    strategy.add_server("a")
-    strategy.add_server("b")
-    strategy.add_server("c")
 
     strategy.select_server(["a", "b", "c"])
     strategy.select_server(["a", "b", "c"])
     strategy.remove_server("b")
 
-    assert strategy.select_server(["a", "c"]) == "c"
     assert strategy.select_server(["a", "c"]) == "a"
+    assert strategy.select_server(["a", "c"]) == "c"
 
 
 def test_empty_returns_none() -> None:

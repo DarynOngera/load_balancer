@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 from enum import Enum, auto
 from typing import Dict, List, Optional
 
@@ -17,7 +16,6 @@ class ServerPool:
     def __init__(self, strategy: LoadBalancingStrategy) -> None:
         self._strategy = strategy
         self._status: Dict[str, ServerStatus] = {}
-        self._lock = asyncio.Lock()
 
     def active_servers(self) -> list[str]:
         return [

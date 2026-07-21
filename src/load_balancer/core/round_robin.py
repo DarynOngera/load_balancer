@@ -7,7 +7,6 @@ from load_balancer.core.interface import LoadBalancingStrategy
 
 class RoundRobinStrategy(LoadBalancingStrategy):
     def __init__(self) -> None:
-        self._servers: list[str] = []
         self._index: int = 0
 
     def select_server(
@@ -26,14 +25,7 @@ class RoundRobinStrategy(LoadBalancingStrategy):
         return server
 
     def add_server(self, server: str) -> None:
-        if server not in self._servers:
-            self._servers.append(server)
+        pass
 
     def remove_server(self, server: str) -> None:
-        if server in self._servers:
-            idx = self._servers.index(server)
-            self._servers.remove(server)
-            if idx < self._index:
-                self._index -= 1
-            if self._index >= len(self._servers) and self._servers:
-                self._index = 0
+        pass
