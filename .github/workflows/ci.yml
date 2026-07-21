@@ -57,6 +57,6 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          dockerfile: load_balancer/Dockerfile
+          file: load_balancer/Dockerfile
           push: false
           tags: load-balancer:ci
