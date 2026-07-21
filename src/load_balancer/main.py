@@ -27,7 +27,7 @@ async def _async_main() -> None:
     await health.start()
 
     try:
-        await run_server(pool, proxy)
+        await run_server(pool, proxy, docker_mgr)
         await asyncio.Event().wait()
     except KeyboardInterrupt:
         pass

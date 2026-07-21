@@ -7,13 +7,14 @@ from aiohttp import web
 
 from load_balancer.config import settings
 from load_balancer.core.consistent_hash import ConsistentHashStrategy
+from load_balancer.docker.manager import DockerManager, random_hostname
 from load_balancer.health.state import ServerPool
 from load_balancer.network.proxy import ProxyClient
 
-routes = web.RouteTableDef()
 
-
-def create_app(pool: ServerPool, proxy: ProxyClient) -> web.Application:
+def create_app(
+    pool: ServerPool, proxy: ProxyClient, docker_mgr: DockerManager
+) -> web.Application:
     app = web.Application()
 
     async def get_replicas(request: web.Request) -> web.Response:
@@ -42,11 +43,10 @@ def create_app(pool: ServerPool, proxy: ProxyClient) -> web.Application:
             )
 
         for hostname in hostnames:
-            pool.add_server(hostname)
+            docker_mgr.spawn(hostname)
 
         for _ in range(n - len(hostnames)):
-            hostname = f"server_{random.randrange(100000, 999999)}"
-            pool.add_server(hostname)
+            docker_mgr.spawn(random_hostname())
 
         servers = pool.active_servers()
         return web.json_response(
@@ -75,14 +75,14 @@ def create_app(pool: ServerPool, proxy: ProxyClient) -> web.Application:
 
         for hostname in hostnames:
             if hostname in current:
-                pool.remove_server(hostname)
+                docker_mgr.remove(hostname)
                 current.remove(hostname)
 
         remaining = n - len(hostnames)
         if remaining > 0 and current:
             selected = random.sample(current, min(remaining, len(current)))
             for hostname in selected:
-                pool.remove_server(hostname)
+                docker_mgr.remove(hostname)
 
         servers = pool.active_servers()
         return web.json_response(
@@ -109,8 +109,10 @@ def create_app(pool: ServerPool, proxy: ProxyClient) -> web.Application:
     return app
 
 
-async def run_server(pool: ServerPool, proxy: ProxyClient) -> None:
-    app = create_app(pool, proxy)
+async def run_server(
+    pool: ServerPool, proxy: ProxyClient, docker_mgr: DockerManager
+) -> None:
+    app = create_app(pool, proxy, docker_mgr)
     runner = web.AppRunner(app)
     await runner.setup()
     site = web.TCPSite(runner, settings.lb_host, settings.lb_port)

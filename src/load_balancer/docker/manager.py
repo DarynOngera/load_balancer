@@ -11,7 +11,7 @@ from load_balancer.config import settings
 from load_balancer.health.state import ServerPool
 
 
-def _random_hostname(length: int = 6) -> str:
+def random_hostname(length: int = 6) -> str:
     suffix = "".join(random.choices(string.ascii_lowercase + string.digits, k=length))
     return f"server_{suffix}"
 
@@ -75,7 +75,7 @@ class DockerManager:
     def scale(self, delta: int) -> None:
         if delta > 0:
             for _ in range(delta):
-                self.spawn(_random_hostname())
+                self.spawn(random_hostname())
         elif delta < 0:
             current = self._pool.active_servers()
             to_remove = random.sample(

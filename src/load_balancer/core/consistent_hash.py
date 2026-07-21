@@ -39,6 +39,8 @@ class ConsistentHashStrategy(LoadBalancingStrategy):
         return self._hash_map[slot]
 
     def add_server(self, server: str) -> None:
+        if server in self._servers:
+            self.remove_server(server)
         server_id = _sha1_int(server)
         self._servers[server] = []
         for j in range(self.num_virtual_servers):
