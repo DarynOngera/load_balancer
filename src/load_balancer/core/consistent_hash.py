@@ -7,7 +7,7 @@ from load_balancer.core.interface import LoadBalancingStrategy
 
 
 def _sha1_int(value: str) -> int:
-    return int(hashlib.sha1(value.encode()).hexdigest(), 16)
+    return int(hashlib.sha1(value.encode(), usedforsecurity=False).hexdigest(), 16)
 
 
 class ConsistentHashStrategy(LoadBalancingStrategy):
@@ -47,7 +47,11 @@ class ConsistentHashStrategy(LoadBalancingStrategy):
         excluded = set(exclude or [])
         for _ in range(self.total_slots):
             candidate = self._hash_map[slot]
-            if candidate is not None and candidate in healthy and candidate not in excluded:
+            if (
+                candidate is not None
+                and candidate in healthy
+                and candidate not in excluded
+            ):
                 return candidate
             slot = (slot + 1) % self.total_slots
         return None

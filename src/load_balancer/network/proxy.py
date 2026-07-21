@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import math
 from typing import Optional
 
 import aiohttp
@@ -41,7 +40,6 @@ class ProxyClient:
         client_ip: str = "",
     ) -> tuple[dict[str, str], bytes, int]:
         excluded: list[str] = []
-        last_error: Optional[Exception] = None
 
         for attempt in range(settings.max_retries + 1):
             server = self._pool.get_server(
@@ -50,6 +48,7 @@ class ProxyClient:
             if server is None:
                 break
 
+            assert self._session is not None
             target_url = f"http://{server}:{settings.backend_port}/{path}"
             try:
                 async with self._session.request(
@@ -57,10 +56,9 @@ class ProxyClient:
                 ) as resp:
                     resp_body = await resp.read()
                     return dict(resp.headers), resp_body, resp.status
-            except (asyncio.TimeoutError, aiohttp.ClientError) as e:
+            except (asyncio.TimeoutError, aiohttp.ClientError):
                 self._pool.mark_unhealthy(server)
                 excluded.append(server)
-                last_error = e
                 if attempt < settings.max_retries:
                     await asyncio.sleep(_backoff_delay(attempt))
 

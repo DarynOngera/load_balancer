@@ -7,7 +7,6 @@ import random
 from aiohttp import web
 
 from load_balancer.config import settings
-from load_balancer.core.consistent_hash import ConsistentHashStrategy
 from load_balancer.docker.manager import DockerManager, random_hostname
 from load_balancer.health.state import ServerPool
 from load_balancer.network.proxy import ProxyClient
@@ -40,7 +39,8 @@ def create_app(
             )
         if not isinstance(hostnames, list):
             return web.json_response(
-                {"message": "'hostnames' must be a list", "status": "failure"}, status=400
+                {"message": "'hostnames' must be a list", "status": "failure"},
+                status=400,
             )
 
         if len(hostnames) > n:
@@ -84,7 +84,8 @@ def create_app(
             )
         if not isinstance(hostnames, list):
             return web.json_response(
-                {"message": "'hostnames' must be a list", "status": "failure"}, status=400
+                {"message": "'hostnames' must be a list", "status": "failure"},
+                status=400,
             )
 
         current = pool.active_servers()

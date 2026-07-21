@@ -78,8 +78,6 @@ class DockerManager:
                 self.spawn(random_hostname())
         elif delta < 0:
             current = self._pool.active_servers()
-            to_remove = random.sample(
-                current, min(abs(delta), len(current))
-            )
+            to_remove = random.sample(current, min(abs(delta), len(current)))
             for hostname in to_remove:
                 self.remove(hostname)

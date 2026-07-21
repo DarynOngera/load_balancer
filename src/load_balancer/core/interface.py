@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 
 class LoadBalancingStrategy(ABC):
@@ -11,13 +11,10 @@ class LoadBalancingStrategy(ABC):
         servers: list[str],
         context: Optional[Dict[str, Any]] = None,
         exclude: Optional[list[str]] = None,
-    ) -> Optional[str]:
-        ...
+    ) -> Optional[str]: ...
 
     @abstractmethod
-    def add_server(self, server: str) -> None:
-        ...
+    def add_server(self, server: str) -> None: ...
 
     @abstractmethod
-    def remove_server(self, server: str) -> None:
-        ...
+    def remove_server(self, server: str) -> None: ...

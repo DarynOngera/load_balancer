@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import math
 from typing import Dict, Optional
 
 import aiohttp
@@ -55,7 +54,10 @@ class HealthChecker:
             self._last_checked[server] = now
             try:
                 url = f"http://{server}:{settings.backend_port}/heartbeat"
-                async with self._session.get(url, timeout=settings.request_timeout):
+                assert self._session is not None
+                async with self._session.get(
+                    url, timeout=aiohttp.ClientTimeout(total=settings.request_timeout)
+                ):
                     self._pool.mark_healthy(server)
                     self._failures.pop(server, None)
             except (asyncio.TimeoutError, aiohttp.ClientError):
@@ -68,5 +70,7 @@ class HealthChecker:
             return True
         last = self._last_checked.get(server, 0.0)
         failures = self._failures.get(server, 0)
-        backoff = min(settings.retry_base_delay * (2**failures), settings.retry_max_delay)
+        backoff = min(
+            settings.retry_base_delay * (2**failures), settings.retry_max_delay
+        )
         return (now - last) >= backoff
