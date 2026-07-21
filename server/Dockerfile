@@ -1,4 +1,4 @@
-FROM python:3.8-slim
+FROM python:3.11-slim
 
 WORKDIR /app
 
@@ -6,4 +6,4 @@ COPY . .
 
 RUN pip install Flask --break-system-packages
 
-CMD ["python", "server.py"]
+CMD ["python", "app.py"]

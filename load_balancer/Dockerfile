@@ -1,9 +1,10 @@
-FROM python:3.8-slim
+FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY . .
+COPY src/ src/
+COPY pyproject.toml .
 
-RUN pip install Flask docker requests --break-system-packages
+RUN pip install . --break-system-packages
 
-CMD ["python", "load_balancer.py"]
+CMD ["python", "-m", "load_balancer"]
