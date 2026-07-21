@@ -15,6 +15,7 @@ async def _async_main() -> None:
     strategy = ConsistentHashStrategy(
         total_slots=settings.total_slots,
         num_virtual_servers=settings.num_virtual_servers,
+        hashing_mode=settings.hashing_mode,
     )
     pool = ServerPool(strategy=strategy)
     docker_mgr = DockerManager(pool=pool)

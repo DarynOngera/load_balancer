@@ -49,13 +49,15 @@ Builds on: https://github.com/DarynOngera/load_balancer
 ## Future Phases
 
 ### Phase 1 — Correct Consistent Hashing
-- [ ] Tune and verify virtual nodes
-- [ ] Hash real requests (sticky sessions)
+- [x] Tune and verify virtual nodes (default: 9→100, total_slots: 512→10000)
+- [x] Hash real requests (sticky sessions via client_ip, fallback to req_id)
+  - [x] `hashing_mode` param on strategy ("sticky"|"random")
+  - [x] `client_ip` propagated: server.py → proxy.py → state.py → strategy
 
 ### Phase 2 — Real Reverse Proxy
-- [ ] Forward every HTTP method
-- [ ] Forward headers, body, query params
-- [ ] Preserve real responses (not forced JSON)
+- [x] Forward every HTTP method (add_route("*", ...) already handles all)
+- [x] Forward headers, body, query params (query string appended in server.py:122)
+- [x] Preserve real responses (not forced JSON) (proxy returns raw: body, status, headers)
 
 ### Phase 3 — Failure Handling
 - [ ] Retry on different backend

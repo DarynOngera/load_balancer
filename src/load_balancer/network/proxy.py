@@ -30,8 +30,9 @@ class ProxyClient:
         req_id: int,
         headers: Optional[dict[str, str]] = None,
         body: Optional[bytes] = None,
+        client_ip: str = "",
     ) -> tuple[dict[str, str], bytes, int]:
-        server = self._pool.get_server(req_id=req_id)
+        server = self._pool.get_server(req_id=req_id, client_ip=client_ip)
         if server is None:
             return {}, b'{"message": "No servers available", "status": "failure"}', 503
 

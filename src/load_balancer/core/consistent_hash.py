@@ -15,9 +15,11 @@ class ConsistentHashStrategy(LoadBalancingStrategy):
         self,
         total_slots: int = 512,
         num_virtual_servers: int = 9,
+        hashing_mode: str = "sticky",
     ) -> None:
         self.total_slots = total_slots
         self.num_virtual_servers = num_virtual_servers
+        self.hashing_mode = hashing_mode
         self._hash_map: List[Optional[str]] = [None] * total_slots
         self._servers: Dict[str, List[int]] = {}
 
@@ -32,8 +34,12 @@ class ConsistentHashStrategy(LoadBalancingStrategy):
     ) -> Optional[str]:
         if not servers or not self._servers:
             return None
-        req_id = (context or {}).get("req_id", 0)
-        slot = self._request_hash(req_id)
+        context = context or {}
+        if self.hashing_mode == "sticky" and "client_ip" in context:
+            slot = _sha1_int(context["client_ip"]) % self.total_slots
+        else:
+            req_id = context.get("req_id", 0)
+            slot = self._request_hash(req_id)
         healthy = set(servers)
         for _ in range(self.total_slots):
             candidate = self._hash_map[slot]

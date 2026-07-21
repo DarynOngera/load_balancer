@@ -118,11 +118,14 @@ def create_app(
         req_id = random.randint(100000, 999999)
         method = request.method
         path = request.match_info.get("path", "")
+        if request.query_string:
+            path = f"{path}?{request.query_string}"
         headers = dict(request.headers)
         body = await request.read()
+        client_ip = request.remote or ""
 
         resp_headers, resp_body, status = await proxy.forward(
-            method, path, req_id, headers=headers, body=body
+            method, path, req_id, headers=headers, body=body, client_ip=client_ip
         )
         return web.Response(body=resp_body, status=status, headers=resp_headers)
 

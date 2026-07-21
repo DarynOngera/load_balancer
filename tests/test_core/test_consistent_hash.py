@@ -68,3 +68,68 @@ def test_select_returns_none_when_no_healthy(consistent_hash: ConsistentHashStra
 
     result = consistent_hash.select_server([], context={"req_id": 42})
     assert result is None
+
+
+def test_sticky_session_same_ip_returns_same_server() -> None:
+    strategy = ConsistentHashStrategy(total_slots=512, num_virtual_servers=9, hashing_mode="sticky")
+    for s in ["server0", "server1", "server2"]:
+        strategy.add_server(s)
+
+    servers = list(strategy.servers.keys())
+    results = []
+    for _ in range(5):
+        server = strategy.select_server(servers, context={"client_ip": "192.168.1.1"})
+        results.append(server)
+
+    assert all(r == results[0] for r in results)
+
+
+def test_sticky_session_different_ips_can_differ() -> None:
+    strategy = ConsistentHashStrategy(total_slots=512, num_virtual_servers=9, hashing_mode="sticky")
+    for s in ["server0", "server1", "server2"]:
+        strategy.add_server(s)
+
+    servers = list(strategy.servers.keys())
+    server_a = strategy.select_server(servers, context={"client_ip": "10.0.0.1"})
+    server_b = strategy.select_server(servers, context={"client_ip": "10.0.0.2"})
+    assert server_a is not None
+    assert server_b is not None
+    assert isinstance(server_a, str)
+    assert isinstance(server_b, str)
+
+
+def test_sticky_filters_unhealthy() -> None:
+    strategy = ConsistentHashStrategy(total_slots=512, num_virtual_servers=9, hashing_mode="sticky")
+    for s in ["server0", "server1", "server2"]:
+        strategy.add_server(s)
+
+    healthy = ["server0", "server2"]
+    seen: set[str] = set()
+    for octet in range(100):
+        ip = f"192.168.0.{octet}"
+        server = strategy.select_server(healthy, context={"client_ip": ip})
+        assert server is not None
+        assert server in healthy
+        seen.add(server)
+
+    assert "server1" not in seen
+
+
+def test_sticky_fallback_to_req_id() -> None:
+    strategy = ConsistentHashStrategy(total_slots=512, num_virtual_servers=9, hashing_mode="sticky")
+    strategy.add_server("server0")
+    result = strategy.select_server(["server0"], context={"req_id": 42})
+    assert result == "server0"
+
+
+def test_random_mode_uses_req_id() -> None:
+    strategy = ConsistentHashStrategy(total_slots=512, num_virtual_servers=9, hashing_mode="random")
+    for s in ["server0", "server1", "server2"]:
+        strategy.add_server(s)
+
+    servers = list(strategy.servers.keys())
+    results = []
+    for _ in range(5):
+        server = strategy.select_server(servers, context={"req_id": 12345})
+        results.append(server)
+    assert all(r == results[0] for r in results)
