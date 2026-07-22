@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import random
 import string
 from typing import List, Optional
@@ -9,6 +10,8 @@ from docker.errors import APIError, NotFound
 
 from load_balancer.config import settings
 from load_balancer.health.state import ServerPool
+
+logger = logging.getLogger(__name__)
 
 
 def random_hostname(length: int = 6) -> str:
@@ -32,10 +35,10 @@ class DockerManager:
                 detach=True,
             )
             self._pool.add_server(hostname)
-            print(f"Spawned server: {hostname}")
+            logger.info("Spawned server %s", hostname)
             return hostname
         except APIError as e:
-            print(f"Failed to spawn {hostname}: {e}")
+            logger.error("Failed to spawn %s: %s", hostname, e)
             return None
 
     def remove(self, hostname: str) -> None:
@@ -43,11 +46,11 @@ class DockerManager:
             container = self._client.containers.get(hostname)
             container.stop()
             container.remove()
-            print(f"Removed server: {hostname}")
+            logger.info("Removed server %s", hostname)
         except NotFound:
-            print(f"Container {hostname} not found")
+            logger.warning("Container %s not found", hostname)
         except APIError as e:
-            print(f"Failed to remove {hostname}: {e}")
+            logger.error("Failed to remove %s: %s", hostname, e)
         finally:
             self._pool.remove_server(hostname)
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import threading
 from typing import Any, Dict, List, Optional
 
 from load_balancer.core.interface import LoadBalancingStrategy
@@ -22,6 +23,7 @@ class ConsistentHashStrategy(LoadBalancingStrategy):
         self.hashing_mode = hashing_mode
         self._hash_map: List[Optional[str]] = [None] * total_slots
         self._servers: Dict[str, List[int]] = {}
+        self._lock = threading.RLock()
 
     def _request_hash(self, req_id: int) -> int:
         return (req_id + 2 * req_id**2 + 17) % self.total_slots
@@ -35,45 +37,48 @@ class ConsistentHashStrategy(LoadBalancingStrategy):
         context: Optional[Dict[str, Any]] = None,
         exclude: Optional[list[str]] = None,
     ) -> Optional[str]:
-        if not servers or not self._servers:
+        with self._lock:
+            if not servers or not self._servers:
+                return None
+            context = context or {}
+            if self.hashing_mode == "sticky" and "client_ip" in context:
+                slot = _sha1_int(context["client_ip"]) % self.total_slots
+            else:
+                req_id = context.get("req_id", 0)
+                slot = self._request_hash(req_id)
+            healthy = set(servers)
+            excluded = set(exclude or [])
+            for _ in range(self.total_slots):
+                candidate = self._hash_map[slot]
+                if (
+                    candidate is not None
+                    and candidate in healthy
+                    and candidate not in excluded
+                ):
+                    return candidate
+                slot = (slot + 1) % self.total_slots
             return None
-        context = context or {}
-        if self.hashing_mode == "sticky" and "client_ip" in context:
-            slot = _sha1_int(context["client_ip"]) % self.total_slots
-        else:
-            req_id = context.get("req_id", 0)
-            slot = self._request_hash(req_id)
-        healthy = set(servers)
-        excluded = set(exclude or [])
-        for _ in range(self.total_slots):
-            candidate = self._hash_map[slot]
-            if (
-                candidate is not None
-                and candidate in healthy
-                and candidate not in excluded
-            ):
-                return candidate
-            slot = (slot + 1) % self.total_slots
-        return None
 
     def add_server(self, server: str) -> None:
-        if server in self._servers:
-            self.remove_server(server)
-        server_id = _sha1_int(server)
-        self._servers[server] = []
-        for j in range(self.num_virtual_servers):
-            slot = self._virtual_server_hash(server_id, j)
-            while self._hash_map[slot] is not None:
-                slot = (slot + 1) % self.total_slots
-            self._hash_map[slot] = server
-            self._servers[server].append(slot)
+        with self._lock:
+            if server in self._servers:
+                self.remove_server(server)
+            server_id = _sha1_int(server)
+            self._servers[server] = []
+            for j in range(self.num_virtual_servers):
+                slot = self._virtual_server_hash(server_id, j)
+                while self._hash_map[slot] is not None:
+                    slot = (slot + 1) % self.total_slots
+                self._hash_map[slot] = server
+                self._servers[server].append(slot)
 
     def remove_server(self, server: str) -> None:
-        slots = self._servers.pop(server, None)
-        if slots is None:
-            return
-        for slot in slots:
-            self._hash_map[slot] = None
+        with self._lock:
+            slots = self._servers.pop(server, None)
+            if slots is None:
+                return
+            for slot in slots:
+                self._hash_map[slot] = None
 
     @property
     def servers(self) -> Dict[str, List[int]]:

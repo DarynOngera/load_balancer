@@ -69,12 +69,12 @@ Builds on: https://github.com/DarynOngera/load_balancer
   - [x] 15 new tests (exclude, backoff, retry loop, exhausted retries, no servers)
 
 ### Phase 4 — Concurrency
-- [ ] Thread safety (locking) — asyncio handles this, review read/write patterns
+- [x] Thread safety (locking) — threading.RLock on ConsistentHashStrategy
 
 ### Phase 5 — Observability
-- [ ] Structured logging
-- [ ] Prometheus metrics
-- [ ] Request IDs
+- [x] Structured logging (logging.basicConfig + logger.info/warning/error)
+- [x] Prometheus metrics (REQUEST_COUNT, REQUEST_DURATION, BACKENDS_ACTIVE, BACKENDS_HEALTHY, RETRIES_TOTAL)
+- [x] Request IDs (uuid4.hex[:8] per request, X-Request-ID header, logged in proxy)
 
 ### Phase 6 — Load Balancing Algorithms
 - [ ] Random, least connections, power of two choices

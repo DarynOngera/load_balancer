@@ -2,14 +2,19 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import random
+import uuid
 
 from aiohttp import web
+from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 
 from load_balancer.config import settings
 from load_balancer.docker.manager import DockerManager, random_hostname
 from load_balancer.health.state import ServerPool
 from load_balancer.network.proxy import ProxyClient
+
+logger = logging.getLogger(__name__)
 
 
 def create_app(
@@ -116,6 +121,7 @@ def create_app(
         )
 
     async def handle_route(request: web.Request) -> web.Response:
+        request_id = uuid.uuid4().hex[:8]
         req_id = random.randint(100000, 999999)
         method = request.method
         path = request.match_info.get("path", "")
@@ -126,11 +132,25 @@ def create_app(
         client_ip = request.remote or ""
 
         resp_headers, resp_body, status = await proxy.forward(
-            method, path, req_id, headers=headers, body=body, client_ip=client_ip
+            method,
+            path,
+            req_id,
+            headers=headers,
+            body=body,
+            client_ip=client_ip,
+            request_id=request_id,
         )
+        resp_headers["X-Request-ID"] = request_id
         return web.Response(body=resp_body, status=status, headers=resp_headers)
 
+    async def metrics(request: web.Request) -> web.Response:
+        return web.Response(
+            body=generate_latest(),
+            content_type=CONTENT_TYPE_LATEST,
+        )
+
     app.router.add_get("/rep", get_replicas)
+    app.router.add_get("/metrics", metrics)
     app.router.add_post("/add", add_servers)
     app.router.add_delete("/rm", remove_servers)
     app.router.add_route("*", "/{path:.*}", handle_route)
@@ -146,4 +166,4 @@ async def run_server(
     await runner.setup()
     site = web.TCPSite(runner, settings.lb_host, settings.lb_port)
     await site.start()
-    print(f"Load balancer listening on {settings.lb_host}:{settings.lb_port}")
+    logger.info("Listening on %s:%s", settings.lb_host, settings.lb_port)
